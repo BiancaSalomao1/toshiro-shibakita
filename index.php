@@ -1,48 +1,59 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-<title>Exemplo PHP</title>
+  <meta charset="UTF-8">
+  <title>Exemplo PHP</title>
 </head>
 <body>
 
 <?php
+// Ativa exibição de erros
 ini_set("display_errors", 1);
-header('Content-Type: text/html; charset=iso-8859-1');
+error_reporting(E_ALL);
 
+echo 'Versão Atual do PHP: ' . phpversion() . '<br>';
 
-
-echo 'Versao Atual do PHP: ' . phpversion() . '<br>';
-
+// Dados de conexão
 $servername = "54.234.153.24";
 $username = "root";
 $password = "Senha123";
 $database = "meubanco";
 
-// Criar conexão
+try {
+    // Criação de conexão
+    $conn = new mysqli($servername, $username, $password, $database);
+    
+    // Verificação da conexão
+    if ($conn->connect_error) {
+        throw new Exception("Conexão falhou: " . $conn->connect_error);
+    }
 
+    // Gerar dados aleatórios
+    $alunoID = rand(1, 999);
+    $nome = strtoupper(substr(bin2hex(random_bytes(4)), 1));
+    $sobrenome = $nome;
+    $endereco = $nome;
+    $cidade = $nome;
+    $host = gethostname();
 
-$link = new mysqli($servername, $username, $password, $database);
+    // Preparar e executar inserção
+    $stmt = $conn->prepare("INSERT INTO dados (AlunoID, Nome, Sobrenome, Endereco, Cidade, Host) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssss", $alunoID, $nome, $sobrenome, $endereco, $cidade, $host);
 
-/* check connection */
-if (mysqli_connect_errno()) {
-    printf("Connect failed: %s\n", mysqli_connect_error());
-    exit();
+    if ($stmt->execute()) {
+        echo "Novo registro criado com sucesso.";
+    } else {
+        echo "Erro ao inserir: " . $stmt->error;
+    }
+
+    // Fechar recursos
+    $stmt->close();
+    $conn->close();
+
+} catch (Exception $e) {
+    echo "Erro: " . $e->getMessage();
 }
-
-$valor_rand1 =  rand(1, 999);
-$valor_rand2 = strtoupper(substr(bin2hex(random_bytes(4)), 1));
-$host_name = gethostname();
-
-
-$query = "INSERT INTO dados (AlunoID, Nome, Sobrenome, Endereco, Cidade, Host) VALUES ('$valor_rand1' , '$valor_rand2', '$valor_rand2', '$valor_rand2', '$valor_rand2','$host_name')";
-
-
-if ($link->query($query) === TRUE) {
-  echo "New record created successfully";
-} else {
-  echo "Error: " . $link->error;
-}
-
 ?>
+
 </body>
 </html>
